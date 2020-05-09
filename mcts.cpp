@@ -36,8 +36,8 @@
 #include <cmath>
 #include <cfloat>
 
-#define RANDOM_WALK_ITERATIONS 5000
-#define MCTS_ITERATIONS 1000
+#define RANDOM_WALK_ITERATIONS 500
+#define MCTS_ITERATIONS 100
 #define C_CONST 2.0
 
 using namespace std;
@@ -117,13 +117,20 @@ class Node{
 	public:
 		//method to deep delete all nodes further down in the tree
 		void clear_children(){
-			if(children == NULL)	return;
+			if(leaf)	return;
+			if(!valid)	return;
 			for(int i = 0; i < 4; i++){
-				children[i].clear_children();
+			//	children[i].clear_children();
 //				state->clear();
 			}
-			delete children;
+//			delete children;
+			return;
 		}
+		//destructor which removes all memory from the node downwards
+//		~Node(){
+//cout<<"d "<<endl;
+//			clear_children();
+//		}
 		//method to return a pointer to one of a Node's children
 		Node getChild(int index){
 			return children[index];
@@ -291,7 +298,7 @@ C*sqrt(log(N)/(double)visits)<<endl;//exit(0);
 		//step three: expand (only sometimes, when leaf node is visited)
 				current->expand();
 				for(int i = 0; i < 4; i++){
-cout<<i<<endl;
+//cout<<i<<endl;
 					//choosing first valid child
 					if(current->children[i].valid)
 						break;
@@ -327,23 +334,24 @@ cout<<i<<endl;
                         for(int i = 0; i < 4; i++){
                                 //only computing valid children
                                 if(children[i].valid){
-cout<<1<<endl;
+//cout<<1<<endl;
 	                                //computing ucb1 for each child using current nodes visits
 	                                ucb1_score = children[i].UCB1();
 	                                //keeping track of maximum ucb1 and which child it was
 	                                if(ucb1_score > max_val){
-cout<<"Replacing former best of "<<max_val<<" with new best of "<<ucb1_score<<". new index is "
-<<i<<" over old index of "<<max_index<<endl;
+//cout<<"Replacing former best of "<<max_val<<" with new best of "<<ucb1_score<<". new index is "
+//<<i<<" over old index of "<<max_index<<endl;
 	                                        max_val = ucb1_score;
 	                                        max_index = i;
 	                                }
 				}
                         }
+//cout<<"returning "<<max_index<<" from pick_child"<<endl;
 			return max_index;
 		}
 		//method called on root to decide a move and delete rest of tree
 		char pick_move(){
-			if(leaf)	return 'Z';
+			if(leaf)	return '3';
 			int index = pick_child();
 		//	state.swap(map[index]);
 		//	visits = 0;
@@ -354,6 +362,9 @@ cout<<"Replacing former best of "<<max_val<<" with new best of "<<ucb1_score<<".
 		//	}
 		//	clear_children();
 		//	leaf = true;
+//cout<<"printing map: "<<map[0]
+//<<' '<<map[1]<<' '<<map[2]<<' '<<map[3]<<endl;
+//cout<<"returning map["<<index<<"] = "<<map[index]<<" from pick_move"<<endl;
 			return map[index];
 		}
 };
@@ -378,11 +389,11 @@ cout<<"MAIN LOOP ITERATION "<<i++<<endl;
 			root.mcts();
 		}
 cout<<"DONE DELIBERATING, PRINTING"<<endl;
-root.print();
-cout<<"TREE SIZE: "<<root.size()<<endl;
-cout<<"CHOSE "<<map[root.pick_move()]<<endl;
+//root.print();
+//cout<<"TREE SIZE: "<<root.size()<<endl;
+cout<<"CHOSE: "<<root.pick_move()<<" FOR MOVE USING map["<<root.pick_move()<<']'<<endl;
 		//after sufficiently exploring, the best child is chosen
-	if(!game_board.swap(map[root.pick_move()])){cout<<"SWAP FAILED"<<endl;
+	if(!game_board.swap(root.pick_move())){cout<<"SWAP FAILED"<<endl;
 //exit(0);
 }
 	game_board.print();

@@ -92,9 +92,9 @@ class fifteen_puzzle{
 		}
 
 		//destructor
-//		~fifteen_puzzle(){
-//			clear();
-//		}
+		~fifteen_puzzle(){
+			clear();
+		}
 		//overload that allows for integer input on method below
 		int valid_swap(int move) const{
 			return valid_swap(map[move]);
@@ -225,7 +225,7 @@ class fifteen_puzzle{
 //print();
 			//first checking if valid move
 			if(!valid_swap(action))
-{cout<<"INVALID SWAP: SENT "<<action<<" ON BOARD: "<<endl;print();	return 0;}
+{cout<<"INVALID SWAP: SENT "<<action<<'/'<<(int)action<<" ON BOARD: "<<endl;print();	return 0;}
 			
 			//finding 0/empty tile
                         int i = 0;
