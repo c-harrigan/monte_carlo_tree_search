@@ -6,19 +6,16 @@ using namespace std;
 
 int expanded = 0;
 double memory = 0;
-class fifteen_puzzle;
-class fifteen_puzzle_list;
+
+const char map[4] = {'U', 'D', 'L', 'R'};
+
 /*Fifteen_puzzle class:
 	the fifteen_puzzle class is just a representation of a puzzle using an array
 	The class has various methods that need to be used by the Monte-Carlo Tree Search
 */
 class fifteen_puzzle{
 	private:
-		int* puzzle;
-		
-		void clear(){
-			free(puzzle);
-		}
+		int puzzle[16];
 		//checks if two puzzles are equal
 		int equals(fifteen_puzzle n){
 			for(int i = 0; i < 16; i++){
@@ -45,14 +42,17 @@ class fifteen_puzzle{
 		}
 
 	public:
+		void clear(){
+//			delete puzzle;
+		}
 		//standard constructor
 		fifteen_puzzle(){
-			puzzle = new int[16];
+			for(int i = 0; i < 16; i++)	puzzle[i] = 0;
 		}
 
 		//constructor that returns a new puzzle given an old puzzle and a move to make on it
                 fifteen_puzzle(fifteen_puzzle p, char a){
-                        puzzle = new int[16];
+                        //puzzle = new int[16];
                         for(int i = 0; i < 16; i++)
                                 puzzle[i] = p.at(i);
                         if(!(swap(a))); //exit(0); //TODO do not leave this line in final version
@@ -61,8 +61,7 @@ class fifteen_puzzle{
 		//same as constructor above, but using an integer index for letters
 		//0 is U, 1 is D, 2 is L, 3 is R
 		fifteen_puzzle(fifteen_puzzle p, int index){
-			char map[4] = {'U','D','L','R'};
-			puzzle = new int[16];
+			//puzzle = new int[16];
 			for(int i = 0; i < 16; i++)
 				puzzle[i] = p.at(i);
 			if(!(swap(map[index])))	;//exit(0);
@@ -70,7 +69,7 @@ class fifteen_puzzle{
 		//copy constructor
 		fifteen_puzzle(const fifteen_puzzle& p){
 //cout<<"in copy constructor\n";
-			puzzle = new int[16];
+			//puzzle = new int[16];
 			for(int i = 0; i < 16; i++){
 				puzzle[i] = p.at(i);
 //cout<<"copied over p.at("<<i<<") = "<<p.at(i)<<" into puzzle["<<i<<"] = "<<puzzle[i]<<endl;
@@ -81,21 +80,26 @@ class fifteen_puzzle{
 		}
 		//equals operator overload
 		fifteen_puzzle operator=(const fifteen_puzzle& p){
-			fifteen_puzzle q;
-			q.puzzle = new int[16];
-			for(int i = 0; i < 16; i++)
-				q.puzzle[i] = p.at(i);
+			fifteen_puzzle q(p);
+//			q.puzzle = new int[16];
+//			for(int i = 0; i < 16; i++)
+//				q.puzzle[i] = p.at(i);
 			return q;
 		}
 
 		//destructor
-		~fifteen_puzzle(){
-			clear();
+//		~fifteen_puzzle(){
+//			clear();
+//		}
+		//overload that allows for integer input on method below
+		int valid_swap(int move) const{
+			return valid_swap(map[move]);
 		}
 		//method which checks if swap criteria is valid (0 for invalid, 1 for valid)
 		//not to be confused with swap_success, which decides if an
 		//already valid swap is randomly successful
-		int valid_swap(char a) const{	
+		int valid_swap(char a) const{
+			sanity(102);	
 			//finding empty tile
 			int i = 0;
 			for(i = 0; i < 16; i++)
@@ -126,6 +130,7 @@ class fifteen_puzzle{
 				default:
 					return 0;
 			}
+			sanity(133);
 			//if switch is exited, move is valid given board configuration
 			return 1;
 		}	
@@ -211,7 +216,7 @@ class fifteen_puzzle{
 		//returns 0 for unsuccessful swaps,
 		//which is decided nondeterministically by the swap_success function
 		int swap(char action){
-sanity();
+			sanity(218);
 //cout<<"SWAP CALLED, PRINTING"<<endl;
 //print();
 			//first checking if valid move
@@ -255,6 +260,9 @@ sanity();
 		
 		//copies from a sent puzzle
 		void copy(const fifteen_puzzle& p){
+			sanity(263);
+			//clear();
+			//puzzle = new int[16];
 			for(int i = 0; i< 16; i++){
 				puzzle[i] = p.at(i);
 			}
@@ -262,17 +270,18 @@ sanity();
 
 		//contructor for a root fifteen_puzzle ggiven a first puzzle to copy
                 fifteen_puzzle(int* input){
-                        puzzle = new int[16];
+                        //puzzle = new int[16];
 			if(input != NULL){
 				for(int i = 0; i < 16; i++)
 					puzzle[i] = input[i];
 			}
                 }
 		//debugging method
-		void sanity() const{
+		void sanity(int line) const{
 			for(int i = 0; i < 16; i++){
 				if(puzzle[i] > 15 || puzzle[i] < 0){
-					cout<<"PUZZLE FAILED SANITY CHECK< PRINTING AND EXITING."<<endl;
+					cout<<"PUZZLE FAILED SANITY CHECK ON LINE "
+					    <<line<<". PRINTING AND EXITING."<<endl;
 					print();
 					exit(0);
 				}

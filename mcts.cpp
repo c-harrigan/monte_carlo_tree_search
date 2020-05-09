@@ -37,13 +37,13 @@
 #include <cfloat>
 
 #define RANDOM_WALK_ITERATIONS 5000
-#define MCTS_ITERATIONS 100
+#define MCTS_ITERATIONS 1000
 #define C_CONST 2.0
 
 using namespace std;
 //global variable to map the four integers to their actions
 //U is 0, D is 1, L is 2, and R is 3
-const char map[4] = {'U', 'D', 'L', 'R'};
+//const char map[4] = {'U', 'D', 'L', 'R'};
 
 /*      Random walk function
                         This function recursively creates temporary puzzles that are
@@ -93,7 +93,7 @@ class Node{
 	private:
 		//array for child pointers, will always be an array of four
 		//even though not every node will have four children
-		Node** children;
+		Node* children;
 		//tracking number of times a node is visited (updated during backpropagation)
 		int visits;
 		//tracking total value of a node (updated during backpropagation)
@@ -102,6 +102,7 @@ class Node{
 		Node* parent;
 		//puzzle held within each node representing the state
 		fifteen_puzzle state;
+		bool valid;
 
 /*		//private constructor used most often. called during node expandion
 		Node(Node* par, fifteen_puzzle p){
@@ -114,18 +115,17 @@ class Node{
 		}
 */		
 	public:
-		//method to deep delete all dynamic memory in a node and its children
-		void clear(){
+		//method to deep delete all nodes further down in the tree
+		void clear_children(){
 			if(children == NULL)	return;
 			for(int i = 0; i < 4; i++){
-				if(children[i] == NULL)	continue;
-				children[i]->clear();
-				delete children[i];
+				children[i].clear_children();
+//				state->clear();
 			}
+			//delete children;
 		}
 		//method to return a pointer to one of a Node's children
-		Node* getChild(int index){
-			if(index < 0 || index > 3)	return NULL;
+		Node getChild(int index){
 			return children[index];
 		}
 		//method to retrieve number of visits
@@ -142,9 +142,10 @@ class Node{
 		}
 		Node(Node* par, fifteen_puzzle p){
 			state.copy(p);
-			total_val = p.heuristic();
+			total_val = state.heuristic();
 			visits = 0;
 			parent = par;
+			valid = true;
 		}
 
 		//basic constructor, probably unused
@@ -153,6 +154,8 @@ class Node{
 			visits = 0;
 			total_val = 0;
 			parent = NULL;
+			state = NULL;
+			valid = false;
 		}
 		//constructor for root node, given a starting fifteen puzzle
 		Node(fifteen_puzzle p){
@@ -161,6 +164,7 @@ class Node{
 			total_val = p.heuristic();
 			parent = NULL;
 			state.copy(p);
+			valid = true;
 		}
 		Node operator=(const Node& n){
 			children = NULL;
@@ -177,15 +181,12 @@ class Node{
 		//method to expand children out, using a constructor
 		void expand(){
 			fifteen_puzzle p;
-			children = new Node*[4];
-			//looping through and adding any valid children, ignoring invalid actions
+			children = new Node[4];
+			//looping through and adding all children, specifying if theyre valid or not
 			for(int i = 0; i < 4; i++){
-				children[i] = NULL;
-				//checking if a move is invalid, for a skip
-				if(!state.valid_swap(map[i]))	continue;
-				//if valid swap the create child for move
-				//p = fifteen_puzzle(state, map[i]);
-				children[i] = new Node(this, fifteen_puzzle(state, map[i]));
+				//if a move is invalid, sent to basic constructor
+				if(!state.valid_swap(map[i]))	children[i] = Node();
+				children[i] = Node(this, fifteen_puzzle(state, map[i]));
 			}
 		}
 		/*	UCB1 method returns the UCB1 value associated with a Node
@@ -228,13 +229,13 @@ C*sqrt(log(N)/(double)visits)<<endl;//exit(0);
 			}
 			cout<<"***PRINTING CHILDREN***"<<endl;
 			for(int i = 0; i < 4; i++){
-				if(children[i] == NULL)	continue;
+				if(!children[i].valid)	continue;
 				cout<<"MOVE: "<<map[i]<<endl;
-				cout<<"Total Value:\t"<<children[i]->total_val<<endl;
-				cout<<"Num Visits:\t"<<children[i]->visits<<endl;
-				cout<<"UCB1 Score: \t"<<children[i]->UCB1()<<endl;
-				cout<<"Heuristic:\t"<<children[i]->state.heuristic()<<endl;
-				children[i]->state.print();
+				cout<<"Total Value:\t"<<children[i].total_val<<endl;
+				cout<<"Num Visits:\t"<<children[i].visits<<endl;
+				cout<<"UCB1 Score: \t"<<children[i].UCB1()<<endl;
+				cout<<"Heuristic:\t"<<children[i].state.heuristic()<<endl;
+				children[i].state.print();
 			}
 /*			for(int i = 0; i < 4; i++){
 				if(children[i] == NULL)	continue;
@@ -245,7 +246,9 @@ C*sqrt(log(N)/(double)visits)<<endl;//exit(0);
 
 		//this method contains and drives all four steps of the tree search
 		void mcts(){
-//cout<<"in mcts"<<endl;
+static int j = 0;
+cout<<j++<<" ";
+if(!j%70)cout<<endl;
 		//step one: finding a leaf node based off ucb1
 			Node* current = this;
 //cout<<1<<endl;
@@ -257,7 +260,7 @@ C*sqrt(log(N)/(double)visits)<<endl;//exit(0);
 				int index = current->pick_child();
 				//updating current
 				if(index < 0 || index > 3)	break;
-				current  = current->children[index];
+				current  = &current->children[index];
 //cout<<4<<endl;
 			}
 //cout<<5<<endl;
@@ -269,7 +272,7 @@ C*sqrt(log(N)/(double)visits)<<endl;//exit(0);
 				current->expand();
 				for(int i = 0; i < 4; i++)
 					//choosing first valid child
-					if(current->children[i] != NULL)
+					if(current->children[i].valid)
 						break;
 			}
 			//now current points to a valid leaf node ready for random walk
@@ -301,9 +304,9 @@ C*sqrt(log(N)/(double)visits)<<endl;//exit(0);
                         int max_index = -1;
                         for(int i = 0; i < 4; i++){
                                 //only computing valid children
-                                if(children[i] != NULL){
+                                if(children[i].valid){
 	                                //computing ucb1 for each child using current nodes visits
-	                                ucb1_score = children[i]->UCB1();
+	                                ucb1_score = children[i].UCB1();
 	                                //keeping track of maximum ucb1 and which child it was
 	                                if(ucb1_score > max_val){
 	                                        max_val = ucb1_score;
@@ -313,16 +316,18 @@ C*sqrt(log(N)/(double)visits)<<endl;//exit(0);
                         }
 			return max_index;
 		}
+		//method called on root to decide a move and delete rest of tree
 		void pick_move(){
 			if(children == NULL)	return;
 			int index = pick_child();
 			state.swap(map[index]);
 			visits = 0;
 			total_val = state.heuristic();
-			for(int i = 0; i < 4; i++){
-				if(children[i] == NULL)	continue;
-				children[i]->clear();
-			}
+		//	for(int i = 0; i < 4; i++){
+		//		if(children[i] == NULL)	continue;
+		//		children[i]->clear();
+		//	}
+			clear_children();
 			children = NULL;
 		}
 };
@@ -330,7 +335,6 @@ C*sqrt(log(N)/(double)visits)<<endl;//exit(0);
 int main(){
 	srand(time(NULL));
 	int start[16] = {5,4,3,2,1,6,7,8,9,0,10,11,12,13,14,15};
-	int new_child;
 	fifteen_puzzle p(start);
 	Node root(p);
 	Node temp;
