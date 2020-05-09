@@ -31,9 +31,9 @@ class fifteen_puzzle{
 			int move_id = move;
 			//the calculation below for odds returns an integer ranging
 			//from 1 to 85, by messing around with it, im happy with the average
-			//odds of a successful move being 64. these integers can be thought of
+			//odds of a successful move being 36. these integers can be thought of
 			//as percentages
-			int odds = 100-((15 + ((int)move % (zero_tile + 5))
+			int odds = ((15 + ((int)move % (zero_tile + 5))
 				   *((int)move % (zero_tile + 4))) % 100);
 			//this rand() line relies on the main program already seeding rand()
 			int roll = rand()%100 + 1;
@@ -51,11 +51,15 @@ class fifteen_puzzle{
 		}
 
 		//constructor that returns a new puzzle given an old puzzle and a move to make on it
+		//this is used to create children in the tree, to successfull swaps are needed
                 fifteen_puzzle(fifteen_puzzle p, char a){
                         //puzzle = new int[16];
                         for(int i = 0; i < 16; i++)
                                 puzzle[i] = p.at(i);
-                        if(!(swap(a))); //exit(0); //TODO do not leave this line in final version
+			if(!valid_swap(a)){
+				exit(0);
+			}	
+                        while(!(swap(a)));
                 }
 
 		//same as constructor above, but using an integer index for letters
@@ -64,7 +68,7 @@ class fifteen_puzzle{
 			//puzzle = new int[16];
 			for(int i = 0; i < 16; i++)
 				puzzle[i] = p.at(i);
-			if(!(swap(map[index])))	;//exit(0);
+			while(!(swap(map[index])));//exit(0);
 		}
 		//copy constructor
 		fifteen_puzzle(const fifteen_puzzle& p){
@@ -220,7 +224,8 @@ class fifteen_puzzle{
 //cout<<"SWAP CALLED, PRINTING"<<endl;
 //print();
 			//first checking if valid move
-			if(!valid_swap(action))	return 0;
+			if(!valid_swap(action))
+{cout<<"INVALID SWAP: SENT "<<action<<" ON BOARD: "<<endl;print();	return 0;}
 			
 			//finding 0/empty tile
                         int i = 0;

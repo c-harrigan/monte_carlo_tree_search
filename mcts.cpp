@@ -93,7 +93,7 @@ class Node{
 	private:
 		//array for child pointers, will always be an array of four
 		//even though not every node will have four children
-		Node* children;
+		Node *children;
 		//tracking number of times a node is visited (updated during backpropagation)
 		int visits;
 		//tracking total value of a node (updated during backpropagation)
@@ -103,7 +103,7 @@ class Node{
 		//puzzle held within each node representing the state
 		fifteen_puzzle state;
 		bool valid;
-
+		bool leaf;
 /*		//private constructor used most often. called during node expandion
 		Node(Node* par, fifteen_puzzle p){
 //TODO be careful with passing puzzles around local space, may need a copy() method call
@@ -122,7 +122,7 @@ class Node{
 				children[i].clear_children();
 //				state->clear();
 			}
-			//delete children;
+			delete children;
 		}
 		//method to return a pointer to one of a Node's children
 		Node getChild(int index){
@@ -141,21 +141,24 @@ class Node{
 			return state;
 		}
 		Node(Node* par, fifteen_puzzle p){
+			children = NULL;
 			state.copy(p);
 			total_val = state.heuristic();
 			visits = 0;
 			parent = par;
 			valid = true;
+			leaf = true;
 		}
 
-		//basic constructor, probably unused
+		//basic constructor, used to create invalid children
 		Node(){
 			children = NULL;
-			visits = 0;
+			visits = INT8_MAX;
 			total_val = 0;
 			parent = NULL;
 			state = NULL;
 			valid = false;
+			leaf = false;
 		}
 		//constructor for root node, given a starting fifteen puzzle
 		Node(fifteen_puzzle p){
@@ -165,13 +168,16 @@ class Node{
 			parent = NULL;
 			state.copy(p);
 			valid = true;
+			leaf = true;
 		}
 		Node operator=(const Node& n){
-			children = NULL;
 			visits = 0;
 			total_val = n.state.heuristic();
 			state.copy(n.state);
-			parent = NULL;
+			parent = n.parent;
+			leaf = true;
+			children = NULL;
+			valid = true;
 		}
 		//method to check if a Node is a goal node, using goal_test in puzzlefile
 		bool is_goal(){
@@ -180,14 +186,19 @@ class Node{
 		}
 		//method to expand children out, using a constructor
 		void expand(){
+//if(parent != NULL)cout<<"IN EXPAND IN NON-ROOT NODE"<<endl;
 			fifteen_puzzle p;
 			children = new Node[4];
 			//looping through and adding all children, specifying if theyre valid or not
 			for(int i = 0; i < 4; i++){
 				//if a move is invalid, sent to basic constructor
-				if(!state.valid_swap(map[i]))	children[i] = Node();
+				if(!state.valid_swap(map[i])){
+					children[i] = Node();
+					continue;
+				}
 				children[i] = Node(this, fifteen_puzzle(state, map[i]));
 			}
+			leaf = false;
 		}
 		/*	UCB1 method returns the UCB1 value associated with a Node
 			The UUCB1 formula is as follows:
@@ -197,6 +208,7 @@ class Node{
 			n is the number of visits on the current node
 		*/
 		double UCB1(){
+//cout<<3<<endl;
 			//return if in the root node
 			if(parent == NULL) return 0;
 			int N = parent->getVisits();
@@ -243,17 +255,25 @@ C*sqrt(log(N)/(double)visits)<<endl;//exit(0);
 			}
 */
 		}
+		//method that returns the number of nodes further in the tree, exclusing invalid ones
+		int size(){
+			int result = 0;
+			for(int i = 0; i < 4; i++){
+				if(children[i].valid)	result += children[i].size();
+			}
+			return 1 + result;
+		}
 
 		//this method contains and drives all four steps of the tree search
 		void mcts(){
-static int j = 0;
-cout<<j++<<" ";
-if(!j%70)cout<<endl;
+//static int j = 0;
+//cout<<j++<<" ";
+//if(!j%70)cout<<endl;
 		//step one: finding a leaf node based off ucb1
 			Node* current = this;
 //cout<<1<<endl;
 			//follow UCB1 down until a leaf node is reached
-			while(current->children != NULL){
+			while(!current->leaf){
 				//the pick child method returns the index of the optimal 
 				//child to follow using ucb1
 //cout<<2<<endl;
@@ -270,10 +290,12 @@ if(!j%70)cout<<endl;
 //cout<<6<<endl;
 		//step three: expand (only sometimes, when leaf node is visited)
 				current->expand();
-				for(int i = 0; i < 4; i++)
+				for(int i = 0; i < 4; i++){
+cout<<i<<endl;
 					//choosing first valid child
 					if(current->children[i].valid)
 						break;
+				}
 			}
 			//now current points to a valid leaf node ready for random walk
 
@@ -298,17 +320,20 @@ if(!j%70)cout<<endl;
 		//simple method which selects a child based on maximum UCB1
 		//for ties, the first tied child is picked
 		int pick_child(){
-			if(children == NULL)	return -1;
+			if(leaf)	return -1;
 			double ucb1_score = 0;
                         double max_val = -1;
                         int max_index = -1;
                         for(int i = 0; i < 4; i++){
                                 //only computing valid children
                                 if(children[i].valid){
+cout<<1<<endl;
 	                                //computing ucb1 for each child using current nodes visits
 	                                ucb1_score = children[i].UCB1();
 	                                //keeping track of maximum ucb1 and which child it was
 	                                if(ucb1_score > max_val){
+cout<<"Replacing former best of "<<max_val<<" with new best of "<<ucb1_score<<". new index is "
+<<i<<" over old index of "<<max_index<<endl;
 	                                        max_val = ucb1_score;
 	                                        max_index = i;
 	                                }
@@ -317,18 +342,19 @@ if(!j%70)cout<<endl;
 			return max_index;
 		}
 		//method called on root to decide a move and delete rest of tree
-		void pick_move(){
-			if(children == NULL)	return;
+		char pick_move(){
+			if(leaf)	return 'Z';
 			int index = pick_child();
-			state.swap(map[index]);
-			visits = 0;
-			total_val = state.heuristic();
+		//	state.swap(map[index]);
+		//	visits = 0;
+		//	total_val = state.heuristic();
 		//	for(int i = 0; i < 4; i++){
 		//		if(children[i] == NULL)	continue;
 		//		children[i]->clear();
 		//	}
-			clear_children();
-			children = NULL;
+		//	clear_children();
+		//	leaf = true;
+			return map[index];
 		}
 };
 
@@ -336,25 +362,30 @@ int main(){
 	srand(time(NULL));
 	int start[16] = {5,4,3,2,1,6,7,8,9,0,10,11,12,13,14,15};
 	fifteen_puzzle p(start);
-	Node root(p);
-	Node temp;
+	//Node root;
+	fifteen_puzzle game_board(p);
 	/*	Main loop:
 		Algorithm deliberates/updates values then makes a move
 		stops when goal is reached
 	*/
 int i = 0;
-	while(!root.is_goal()){
+	while(!p.goal_test()){
 cout<<"MAIN LOOP ITERATION "<<i++<<endl;
+		Node root(game_board);
 		//loops through a set iteration of mcts before making a decision
 		//number of iterations is subject to change
 		for(int i = 0; i < MCTS_ITERATIONS; i++){
 			root.mcts();
 		}
 cout<<"DONE DELIBERATING, PRINTING"<<endl;
-root.getState().print();
-//root.print();
+root.print();
+cout<<"TREE SIZE: "<<root.size()<<endl;
+cout<<"CHOSE "<<map[root.pick_move()]<<endl;
 		//after sufficiently exploring, the best child is chosen
-		root.pick_move();
+	if(!game_board.swap(map[root.pick_move()])){cout<<"SWAP FAILED"<<endl;
+//exit(0);
+}
+	game_board.print();
 //exit(0);
 	}
 	cout<<"GOAL FOUND"<<endl;
