@@ -37,7 +37,7 @@
 #include <cfloat>
 
 #define RANDOM_WALK_ITERATIONS 500
-#define MCTS_ITERATIONS 100
+#define MCTS_ITERATIONS 500
 #define C_CONST 2.0
 
 using namespace std;
@@ -63,8 +63,6 @@ using namespace std;
                         learn from low-probalility moves that the expected value is lower
 */
 double random_walk(int iterations, fifteen_puzzle state){
-//static int i = 0;
-//cout<<"IN RANDOM WALK "<<i++<<endl;
 	//base case, number of iterations reached
 	if(iterations < 0)	return 0.0;
 	//randomly selecting a move until one is valid
@@ -104,33 +102,7 @@ class Node{
 		fifteen_puzzle state;
 		bool valid;
 		bool leaf;
-/*		//private constructor used most often. called during node expandion
-		Node(Node* par, fifteen_puzzle p){
-//TODO be careful with passing puzzles around local space, may need a copy() method call
-			parent = par;
-			state = p;
-			children = NULL;
-			total_val = 0;
-			visits = 0;
-		}
-*/		
 	public:
-		//method to deep delete all nodes further down in the tree
-		void clear_children(){
-			if(leaf)	return;
-			if(!valid)	return;
-			for(int i = 0; i < 4; i++){
-			//	children[i].clear_children();
-//				state->clear();
-			}
-//			delete children;
-			return;
-		}
-		//destructor which removes all memory from the node downwards
-//		~Node(){
-//cout<<"d "<<endl;
-//			clear_children();
-//		}
 		//method to return a pointer to one of a Node's children
 		Node getChild(int index){
 			return children[index];
@@ -156,7 +128,6 @@ class Node{
 			valid = true;
 			leaf = true;
 		}
-
 		//basic constructor, used to create invalid children
 		Node(){
 			children = NULL;
@@ -193,7 +164,6 @@ class Node{
 		}
 		//method to expand children out, using a constructor
 		void expand(){
-//if(parent != NULL)cout<<"IN EXPAND IN NON-ROOT NODE"<<endl;
 			fifteen_puzzle p;
 			children = new Node[4];
 			//looping through and adding all children, specifying if theyre valid or not
@@ -215,7 +185,6 @@ class Node{
 			n is the number of visits on the current node
 		*/
 		double UCB1(){
-//cout<<3<<endl;
 			//return if in the root node
 			if(parent == NULL) return 0;
 			int N = parent->getVisits();
@@ -224,14 +193,6 @@ class Node{
 			}	
 			double result = total_val/(double)visits + 
 					C_CONST * sqrt( log(N) /(double)visits);
-/*
-if(result > 1000){
-cout<<"UCBI LARGE, DUMPING INFO AND EXITING"<<endl;
-cout<<"N = "<<N<<". Visits = "<<visits<<". total_val = "<<
-total_val<<". V = "<<total_val/(double)visits<<". C*sqrt(log(N)/(double)visits) = "<<
-C*sqrt(log(N)/(double)visits)<<endl;//exit(0);
-}*/
-//cout<<"UCB1 RESULT: "<<result<<endl;
 			return result;
 		}
 		//prints state and every child's state, as well as visits and total values
@@ -256,49 +217,39 @@ C*sqrt(log(N)/(double)visits)<<endl;//exit(0);
 				cout<<"Heuristic:\t"<<children[i].state.heuristic()<<endl;
 				children[i].state.print();
 			}
-/*			for(int i = 0; i < 4; i++){
-				if(children[i] == NULL)	continue;
-				children[i]->print();
-			}
-*/
 		}
 		//method that returns the number of nodes further in the tree, exclusing invalid ones
 		int size(){
 			int result = 0;
+			if(!valid)	return 0;
+			if(leaf)	return 1;
 			for(int i = 0; i < 4; i++){
-				if(children[i].valid)	result += children[i].size();
+				result += children[i].size();
 			}
 			return 1 + result;
 		}
 
 		//this method contains and drives all four steps of the tree search
 		void mcts(){
-//static int j = 0;
-//cout<<j++<<" ";
-//if(!j%70)cout<<endl;
+
 		//step one: finding a leaf node based off ucb1
 			Node* current = this;
-//cout<<1<<endl;
 			//follow UCB1 down until a leaf node is reached
 			while(!current->leaf){
 				//the pick child method returns the index of the optimal 
 				//child to follow using ucb1
-//cout<<2<<endl;
 				int index = current->pick_child();
 				//updating current
 				if(index < 0 || index > 3)	break;
 				current  = &current->children[index];
-//cout<<4<<endl;
 			}
-//cout<<5<<endl;
 			//now current points to a leaf node, need to check if already visited
 			if(current->visits != 0){
 				//already visited, expand children and pick one
-//cout<<6<<endl;
+
 		//step three: expand (only sometimes, when leaf node is visited)
 				current->expand();
 				for(int i = 0; i < 4; i++){
-//cout<<i<<endl;
 					//choosing first valid child
 					if(current->children[i].valid)
 						break;
@@ -334,37 +285,21 @@ C*sqrt(log(N)/(double)visits)<<endl;//exit(0);
                         for(int i = 0; i < 4; i++){
                                 //only computing valid children
                                 if(children[i].valid){
-//cout<<1<<endl;
 	                                //computing ucb1 for each child using current nodes visits
 	                                ucb1_score = children[i].UCB1();
 	                                //keeping track of maximum ucb1 and which child it was
 	                                if(ucb1_score > max_val){
-//cout<<"Replacing former best of "<<max_val<<" with new best of "<<ucb1_score<<". new index is "
-//<<i<<" over old index of "<<max_index<<endl;
 	                                        max_val = ucb1_score;
 	                                        max_index = i;
 	                                }
 				}
                         }
-//cout<<"returning "<<max_index<<" from pick_child"<<endl;
 			return max_index;
 		}
 		//method called on root to decide a move and delete rest of tree
 		char pick_move(){
-			if(leaf)	return '3';
+			if(leaf)	return 'Z';
 			int index = pick_child();
-		//	state.swap(map[index]);
-		//	visits = 0;
-		//	total_val = state.heuristic();
-		//	for(int i = 0; i < 4; i++){
-		//		if(children[i] == NULL)	continue;
-		//		children[i]->clear();
-		//	}
-		//	clear_children();
-		//	leaf = true;
-//cout<<"printing map: "<<map[0]
-//<<' '<<map[1]<<' '<<map[2]<<' '<<map[3]<<endl;
-//cout<<"returning map["<<index<<"] = "<<map[index]<<" from pick_move"<<endl;
 			return map[index];
 		}
 };
@@ -390,14 +325,12 @@ cout<<"MAIN LOOP ITERATION "<<i++<<endl;
 		}
 cout<<"DONE DELIBERATING, PRINTING"<<endl;
 //root.print();
-//cout<<"TREE SIZE: "<<root.size()<<endl;
-cout<<"CHOSE: "<<root.pick_move()<<" FOR MOVE USING map["<<root.pick_move()<<']'<<endl;
+cout<<"TREE SIZE: "<<root.size()<<endl;
+cout<<"CHOSE: "<<root.pick_move()<<endl;
 		//after sufficiently exploring, the best child is chosen
 	if(!game_board.swap(root.pick_move())){cout<<"SWAP FAILED"<<endl;
-//exit(0);
 }
 	game_board.print();
-//exit(0);
 	}
 	cout<<"GOAL FOUND"<<endl;
 	

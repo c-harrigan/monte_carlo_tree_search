@@ -42,9 +42,6 @@ class fifteen_puzzle{
 		}
 
 	public:
-		void clear(){
-//			delete puzzle;
-		}
 		//standard constructor
 		fifteen_puzzle(){
 			for(int i = 0; i < 16; i++)	puzzle[i] = 0;
@@ -72,29 +69,17 @@ class fifteen_puzzle{
 		}
 		//copy constructor
 		fifteen_puzzle(const fifteen_puzzle& p){
-//cout<<"in copy constructor\n";
 			//puzzle = new int[16];
 			for(int i = 0; i < 16; i++){
 				puzzle[i] = p.at(i);
-//cout<<"copied over p.at("<<i<<") = "<<p.at(i)<<" into puzzle["<<i<<"] = "<<puzzle[i]<<endl;
 			}
-//cout<<"done copying, printing puzzle and then p"<<endl;
-//print();p.print();
-//cout<<"done copying"<<endl;
 		}
 		//equals operator overload
 		fifteen_puzzle operator=(const fifteen_puzzle& p){
 			fifteen_puzzle q(p);
-//			q.puzzle = new int[16];
-//			for(int i = 0; i < 16; i++)
-//				q.puzzle[i] = p.at(i);
 			return q;
 		}
 
-		//destructor
-		~fifteen_puzzle(){
-			clear();
-		}
 		//overload that allows for integer input on method below
 		int valid_swap(int move) const{
 			return valid_swap(map[move]);
@@ -161,7 +146,8 @@ class fifteen_puzzle{
 				if(puzzle[i] != i + 1)	return false;
 			return true;
 		}
-
+//NOTE: Heuristic function is subject to change, currently returns 0 for non-goal states,
+//it may return some small value for near-goal states in the future
 		//method that returns a heuristic value associated with the puzzle configuration
                 double heuristic() const{
 			bool goal = true;
@@ -221,11 +207,8 @@ class fifteen_puzzle{
 		//which is decided nondeterministically by the swap_success function
 		int swap(char action){
 			sanity(218);
-//cout<<"SWAP CALLED, PRINTING"<<endl;
-//print();
 			//first checking if valid move
-			if(!valid_swap(action))
-{cout<<"INVALID SWAP: SENT "<<action<<'/'<<(int)action<<" ON BOARD: "<<endl;print();	return 0;}
+			if(!valid_swap(action))	return 0;
 			
 			//finding 0/empty tile
                         int i = 0;
@@ -258,8 +241,6 @@ class fifteen_puzzle{
                                 default:
                                         break;
                         }
-//cout<<"SWAP FINISHED, PRINTING"<<endl;
-//print();
 			return 1;
                 }
 		
@@ -307,34 +288,3 @@ int* get_input(int * b){
 	return b;
 }
 
-//basic tests below
-/*
-int main(){
-	srand(time(NULL));
-	char map[4] = {'U', 'D', 'L', 'R'};
-	int input[16] = {1,2,8,3,5,6,7,4,9,10,12,11,13,14,15,0};
-	fifteen_puzzle p(input);
-	if(!p.goal_test())	cout<<"p is a goal\n";
-	cout<<"***********BASIC HEURISTIC TEST***************"<<endl;
-	p.print();
-	cout<<"heuristic: "<<p.goal_test()<<endl<<endl;
-	cout<<"***********TESTING RANDOM SWAPPED PUZZLE*************"<<endl;
-	for(int i = 0; i < 16; i++){
-		int r = rand()%16;
-		int temp = input[i];
-		input[i] = input[r];
-		input[r] = temp;
-	}
-	fifteen_puzzle u(input);
-	u.print();
-	cout<<"heuristic: "<<u.goal_test()<<endl<<endl;
-	cout<<"***********TESTING PUZZLE CONSTRUCTOR***************"<<endl;
-	int r = rand()%4;
-	while(!u.valid_swap(map[r]))	r = rand()%4;
-	cout<<"move chosen: "<<map[r]<<endl;
-	fifteen_puzzle v(u, r);
-	v.print();
-	cout<<"heuristic: "<<v.goal_test()<<endl<<endl;
-	return 0;
-	
-}*/
