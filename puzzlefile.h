@@ -40,6 +40,18 @@ class fifteen_puzzle{
 			if(roll < odds)	return 0;	//returns 0 if the random roll was lower than odds of success
 			return 1;	//returns 1 if random roll met or exceeded odds for a given move
 		}
+		//private constructor used by avg_heuristic for testing purposes
+		void scramble(){
+			int temp;
+			int r;
+			for(int i = 0; i < 16; i++)	puzzle[i] = i;
+			for(int i = 0; i < 16; i++){
+				r = rand()%16;
+				int temp = puzzle[i];
+				puzzle[i] = puzzle[r]
+				puzzle[r] = temp;
+			}
+		}
 
 	public:
 		//standard constructor
@@ -149,13 +161,14 @@ class fifteen_puzzle{
 //NOTE: Heuristic function is subject to change, currently returns 0 for non-goal states,
 //it may return some small value for near-goal states in the future
 		//method that returns a heuristic value associated with the puzzle configuration
+		//UCB1 is only convergent
                 double heuristic() const{
 			bool goal = true;
                         for(int i = 0; i < 16; i++)
                                 if(puzzle[i] != i + 1)
                                         goal = false;
 			
-			if(goal)	return 100;
+			if(goal)	return 1;
                         //if not a goal, calculates and returns heuristic
 			int heuristic = 0;
 			/*since mcts will assign value and higher value is better,
@@ -197,8 +210,8 @@ class fifteen_puzzle{
 				
 			}
 			//to avoid overly-large values that may overflow, divides down
-			//return value/16000;
-			return 0.0;
+			//return value/160
+			return value/1600;
                 }
 
 		
@@ -273,6 +286,20 @@ class fifteen_puzzle{
 				}
 			}
 		}
+		//method only for testing, may be removed later
+		void avg_heuristic(){
+			//this method loops through testing random board configurations to find
+			//the average value being returned by heuristic()
+			int iterations = 10000
+			fifteen_puzzle p();
+			double total;
+			for(int i = 0; i < iterations; i++){
+				p.scramble();
+				total += p.heuristic();
+			}
+			cout<<"AVERAGE HEURISTIC OVER "<<iterations<<" ITERATIONS IS "<<total/iterations;
+		}
+		
 };
 
 
