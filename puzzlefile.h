@@ -48,7 +48,7 @@ class fifteen_puzzle{
 			for(int i = 0; i < 16; i++){
 				r = rand()%16;
 				int temp = puzzle[i];
-				puzzle[i] = puzzle[r]
+				puzzle[i] = puzzle[r];
 				puzzle[r] = temp;
 			}
 		}
@@ -290,7 +290,7 @@ class fifteen_puzzle{
 		void avg_heuristic(){
 			//this method loops through testing random board configurations to find
 			//the average value being returned by heuristic()
-			int iterations = 10000
+			int iterations = 10000;
 			fifteen_puzzle p();
 			double total;
 			for(int i = 0; i < iterations; i++){
