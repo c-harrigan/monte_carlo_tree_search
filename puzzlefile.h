@@ -7,7 +7,10 @@ using namespace std;
 int expanded = 0;
 double memory = 0;
 
+//map used to translate indeces to their associate move letter
 const char map[4] = {'U', 'D', 'L', 'R'};
+//heuristic cutoff
+#define cutoff 73
 
 /*Fifteen_puzzle class:
 	the fifteen_puzzle class is just a representation of a puzzle using an array
@@ -168,7 +171,7 @@ class fifteen_puzzle{
                                 if(puzzle[i] != i + 1)
                                         goal = false;
 			
-			if(goal)	return 1;
+			if(goal)	return 1000;
                         //if not a goal, calculates and returns heuristic
 			int heuristic = 0;
 			/*since mcts will assign value and higher value is better,
@@ -209,9 +212,14 @@ class fifteen_puzzle{
 				value += (6.0 - manhatten);
 				
 			}
-			//to avoid overly-large values that may overflow, divides down
-			//return value/160
-			return value/1600;
+
+			//NOTE: cutoff implementation is not being used, instead a vary small value
+			//by dividing heuristic
+			return value / 160;
+			//returning some points if close to correct answer i.e. meets a heuristic cutoff
+			//cutoff is defined at the top of the file
+			//if(value >= cutoff)	return 0.5;
+			//return 0.0;
                 }
 
 		
@@ -259,7 +267,7 @@ class fifteen_puzzle{
 		
 		//copies from a sent puzzle
 		void copy(const fifteen_puzzle& p){
-			sanity(263);
+			sanity(270);
 			//clear();
 			//puzzle = new int[16];
 			for(int i = 0; i< 16; i++){
@@ -290,27 +298,21 @@ class fifteen_puzzle{
 		void avg_heuristic(){
 			//this method loops through testing random board configurations to find
 			//the average value being returned by heuristic()
-			int iterations = 10000;
-			double total;
+			int iterations = 2000;
+			double total = 0.0;
+			int cutoff_count = 0;
 			for(int i = 0; i < iterations; i++){
 				scramble();
 				total += heuristic();
+				//cutoff is defined at the top of the file
+				if(heuristic() >= cutoff)	cutoff_count++;
 			}
-			cout<<"AVERAGE HEURISTIC OVER "<<iterations<<" ITERATIONS IS "<<total/iterations;
+			cout<<"AVERAGE HEURISTIC OVER "<<iterations<<" ITERATIONS IS "
+						       <<total/iterations<<endl;
+			cout<<"NUMBER ABOVE "<<cutoff<<": "<<cutoff_count<<endl;
 		}
 		
 };
 
 
-//function which gets input and creates the start fifteen_puzzle's puzzle
-int* get_input(int * b){
-	string input;
-	int num;
-	cout<<"Enter sequence:\n";
-	for(int i = 0; i < 16; i++){
-		cin >> num;
-		b[i] = num;
-	}
-	return b;
-}
 
