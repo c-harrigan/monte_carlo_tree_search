@@ -291,11 +291,10 @@ class fifteen_puzzle{
 			//this method loops through testing random board configurations to find
 			//the average value being returned by heuristic()
 			int iterations = 10000;
-			fifteen_puzzle p();
 			double total;
 			for(int i = 0; i < iterations; i++){
-				p.scramble();
-				total += p.heuristic();
+				scramble();
+				total += heuristic();
 			}
 			cout<<"AVERAGE HEURISTIC OVER "<<iterations<<" ITERATIONS IS "<<total/iterations;
 		}
