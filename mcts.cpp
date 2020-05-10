@@ -36,17 +36,12 @@
 #include <cmath>
 #include <cfloat>
 
-//TODO remove
-#include <unistd.h>
 
-#define RANDOM_WALK_ITERATIONS 2000
-#define MCTS_ITERATIONS 1000
+#define RANDOM_WALK_ITERATIONS 200
+#define MCTS_ITERATIONS 20
 #define C_CONST 2.0
 
 using namespace std;
-//global variable to map the four integers to their actions
-//U is 0, D is 1, L is 2, and R is 3
-//const char map[4] = {'U', 'D', 'L', 'R'};
 
 /*      Random walk function
                         This function recursively creates temporary puzzles that are
@@ -122,6 +117,7 @@ class Node{
 		fifteen_puzzle getState(){
 			return state;
 		}
+		//constructor that copies over a state and takes in a parent pointer
 		Node(Node* par, fifteen_puzzle p){
 			children = NULL;
 			state.copy(p);
