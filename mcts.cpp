@@ -39,8 +39,8 @@
 //TODO remove
 #include <unistd.h>
 
-#define RANDOM_WALK_ITERATIONS 100
-#define MCTS_ITERATIONS 500
+#define RANDOM_WALK_ITERATIONS 2000
+#define MCTS_ITERATIONS 1000
 #define C_CONST 2.0
 
 using namespace std;
@@ -270,7 +270,9 @@ class Node{
 			//now current points to a valid leaf node ready for random walk
 
 		//step three and first half of step four: random walk and backpropagate back to leaf
-			double r_val = random_walk(RANDOM_WALK_ITERATIONS, current->state);
+			double r_val = (random_walk(RANDOM_WALK_ITERATIONS, current->state)
+				       /RANDOM_WALK_ITERATIONS);
+
 			current->total_val += r_val;
 
 		//step four finished: backpropagate values up the tree to the root
@@ -317,8 +319,21 @@ class Node{
 };
 
 int main(){
-	srand(time(NULL));
-	int start[16] = {5,4,3,2,1,6,7,8,9,0,10,11,12,13,14,15};
+	bool display;
+	int start[16];
+	//input reading
+	//first the puzzle
+	for(int i = 0; i < 16; i++)
+		cin>>start[i];
+	//now reading y or not for display while searching
+	char letter;
+	cin>>letter;
+	if(letter == 'y' || letter == 'Y')	display = true;
+	else					display = false;
+	//now checking if rand is seeded or not
+	cin>>letter;
+	if(letter == 'n' || letter == 'N')	srand(time(NULL));
+	else					srand(letter);
 	fifteen_puzzle p(start);
 	//Node root;
 	fifteen_puzzle game_board(p);
@@ -326,24 +341,22 @@ int main(){
 		Algorithm deliberates/updates values then makes a move
 		stops when goal is reached
 	*/
-int i = 0;
-	while(!p.goal_test()){
-cout<<"MAIN LOOP ITERATION "<<i++<<endl;
+	int j = 0;
+	while(!game_board.goal_test()){
 		Node root(game_board);
 		//loops through a set iteration of mcts before making a decision
 		//number of iterations is subject to change
 		for(int i = 0; i < MCTS_ITERATIONS; i++){
 			root.mcts();
 		}
-cout<<"DONE DELIBERATING, PRINTING"<<endl;
-//root.print();
-cout<<"TREE SIZE: "<<root.size()<<endl;
-cout<<"CHOSE: "<<root.pick_move()<<endl;
-//root.print();
-//sleep(10);
 		//after sufficiently exploring, the best child is chosen
 		game_board.swap(root.pick_move());
-	game_board.print();
+		if(display){
+			cout<<"MAIN LOOP ITERATION "<<j++<<endl;
+			cout<<"DONE DELIBERATING, CHOSE TO MOVE "<<root.pick_move()<<endl;
+			cout<<"PRINTING BOARD"<<endl;
+			game_board.print();
+		}
 	}
 	cout<<"GOAL FOUND"<<endl;
 	
