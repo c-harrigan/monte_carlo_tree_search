@@ -36,7 +36,10 @@
 #include <cmath>
 #include <cfloat>
 
-#define RANDOM_WALK_ITERATIONS 500
+//TODO remove
+#include <unistd.h>
+
+#define RANDOM_WALK_ITERATIONS 100
 #define MCTS_ITERATIONS 500
 #define C_CONST 2.0
 
@@ -200,6 +203,9 @@ class Node{
 			cout<<"***********************"<<endl;
 			cout<<"Total Value:\t"<<total_val<<endl;
 			cout<<"Num Visits:\t"<<visits<<endl;
+			cout<<"Avg Value:\t";
+				if(visits == 0)	cout<<"Infinity"<<endl;
+				else		cout<<total_val/(double)visits<<endl;
 			cout<<"UCB1 SCORE:\t"<<UCB1()<<endl;
 			cout<<"Heuristic:\t"<<state.heuristic()<<endl;
 			state.print();
@@ -209,10 +215,16 @@ class Node{
 			}
 			cout<<"***PRINTING CHILDREN***"<<endl;
 			for(int i = 0; i < 4; i++){
-				if(!children[i].valid)	continue;
+				if(!children[i].valid){
+					cout<<"Skipped invalid child with move "<<map[i]<<endl;
+					continue;
+				}
 				cout<<"MOVE: "<<map[i]<<endl;
 				cout<<"Total Value:\t"<<children[i].total_val<<endl;
 				cout<<"Num Visits:\t"<<children[i].visits<<endl;
+				cout<<"Avg Value:\t";
+					if(visits == 0)	cout<<"Infinity"<<endl;
+					else 		cout<<total_val/(double)visits<<endl;
 				cout<<"UCB1 Score: \t"<<children[i].UCB1()<<endl;
 				cout<<"Heuristic:\t"<<children[i].state.heuristic()<<endl;
 				children[i].state.print();
@@ -327,9 +339,10 @@ cout<<"DONE DELIBERATING, PRINTING"<<endl;
 //root.print();
 cout<<"TREE SIZE: "<<root.size()<<endl;
 cout<<"CHOSE: "<<root.pick_move()<<endl;
+//root.print();
+//sleep(10);
 		//after sufficiently exploring, the best child is chosen
-	if(!game_board.swap(root.pick_move())){cout<<"SWAP FAILED"<<endl;
-}
+		game_board.swap(root.pick_move());
 	game_board.print();
 	}
 	cout<<"GOAL FOUND"<<endl;
